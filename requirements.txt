@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+pandas
+numpy
+matplotlib
+seaborn
+xlsxwriter
+openpyxl
+python-multipart

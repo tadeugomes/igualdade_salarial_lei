@@ -1,0 +1,9 @@
+cnpj_estabelecimento,cbo_2002,cbo_titulo,sexo,raca_cor,salario_contratual_mensal,remuneracao_total_mensal,data_competencia,id_trabalhador_hash
+12345678901234,1234,Analista de Sistemas,M,Preta,5000.00,5500.00,2023-01-01,hash1
+12345678901234,1234,Analista de Sistemas,F,Parda,4800.00,5300.00,2023-01-01,hash2
+12345678901234,1234,Analista de Sistemas,M,Parda,5200.00,5700.00,2023-01-01,hash3
+12345678901234,1234,Analista de Sistemas,F,Branca,4900.00,5400.00,2023-01-01,hash4
+12345678901234,5678,Designer Gráfico,M,Preta,4000.00,4500.00,2023-01-01,hash5
+12345678901234,5678,Designer Gráfico,F,Parda,3800.00,4300.00,2023-01-01,hash6
+12345678901234,5678,Designer Gráfico,M,Branca,4200.00,4700.00,2023-01-01,hash7
+12345678901234,5678,Designer Gráfico,F,Preta,3900.00,4400.00,2023-01-01,hash8
