@@ -1,0 +1,25 @@
+cnpj_estabelecimento,cbo_2002,cbo_titulo,sexo,raca_cor,salario_contratual_mensal,remuneracao_total_mensal,data_competencia,id_trabalhador_hash
+12345678901234,1234,Analista de Sistemas,M,Branca,5000.00,5500.00,2023-01-01,hash1
+12345678901234,1234,Analista de Sistemas,F,Parda,4800.00,5300.00,2023-01-01,hash2
+12345678901234,1234,Analista de Sistemas,M,Preta,5200.00,5700.00,2023-01-01,hash3
+12345678901234,1234,Analista de Sistemas,F,Branca,4900.00,5400.00,2023-01-01,hash4
+12345678901234,5678,Designer Gráfico,M,Preta,4000.00,4500.00,2023-01-01,hash5
+12345678901234,5678,Designer Gráfico,F,Parda,3800.00,4300.00,2023-01-01,hash6
+12345678901234,5678,Designer Gráfico,M,Branca,4200.00,4700.00,2023-01-01,hash7
+12345678901234,5678,Designer Gráfico,F,Amarela,3900.00,4400.00,2023-01-01,hash8
+12345678901234,1234,Analista de Sistemas,M,Branca,5100.00,5600.00,2023-01-01,hash9
+12345678901234,1234,Analista de Sistemas,F,Preta,4700.00,5200.00,2023-01-01,hash10
+12345678901234,1234,Analista de Sistemas,M,Parda,5300.00,5800.00,2023-01-01,hash11
+12345678901234,1234,Analista de Sistemas,F,Indígena,4850.00,5350.00,2023-01-01,hash12
+12345678901234,5678,Designer Gráfico,M,Parda,4100.00,4600.00,2023-01-01,hash13
+12345678901234,5678,Designer Gráfico,F,Branca,3950.00,4450.00,2023-01-01,hash14
+12345678901234,5678,Designer Gráfico,M,Preta,4150.00,4650.00,2023-01-01,hash15
+12345678901234,5678,Designer Gráfico,F,Parda,3850.00,4350.00,2023-01-01,hash16
+12345678901234,1234,Analista de Sistemas,M,Amarela,5050.00,5550.00,2023-01-01,hash17
+12345678901234,1234,Analista de Sistemas,F,Branca,4950.00,5450.00,2023-01-01,hash18
+12345678901234,1234,Analista de Sistemas,M,Indígena,5150.00,5650.00,2023-01-01,hash19
+12345678901234,1234,Analista de Sistemas,F,Preta,4750.00,5250.00,2023-01-01,hash20
+12345678901234,5678,Designer Gráfico,M,Branca,4050.00,4550.00,2023-01-01,hash21
+12345678901234,5678,Designer Gráfico,F,Amarela,3900.00,4400.00,2023-01-01,hash22
+12345678901234,5678,Designer Gráfico,M,Parda,4100.00,4600.00,2023-01-01,hash23
+12345678901234,5678,Designer Gráfico,F,Indígena,3850.00,4350.00,2023-01-01,hash24

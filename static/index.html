@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Igualdade Salarial</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #0F6CBD;
+            --accent-color: #585858;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), #1a4c8b);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border: none;
+            margin-bottom: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: #0d5a9e;
+            border-color: #0d5a9e;
+        }
+        
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-area:hover {
+            border-color: var(--primary-color);
+            background-color: #e9f0f9;
+        }
+        
+        .upload-area.active {
+            border-color: var(--primary-color);
+            background-color: #d1e3f9;
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        .result-section {
+            display: none;
+        }
+        
+        .progress-bar {
+            background-color: var(--primary-color);
+        }
+        
+        .footer {
+            background-color: var(--accent-color);
+            color: white;
+            padding: 1.5rem 0;
+            margin-top: 2rem;
+        }
+        
+        .feature-card {
+            text-align: center;
+            padding: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1><i class="fas fa-chart-bar"></i> Relatório de Igualdade Salarial</h1>
+                    <p class="lead">Solução completa para análise de igualdade salarial por gênero e raça/cor</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <img src="https://www.gov.br/mte/pt-br" alt="Logo" class="img-fluid" style="max-height: 80px;">
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Features Section -->
+        <section class="mb-5">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-file-excel"></i>
+                        </div>
+                        <h5>Importação de Dados</h5>
+                        <p>Suporte para arquivos CSV e Excel com estrutura padronizada</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                        <h5>Análise Completa</h5>
+                        <p>Cálculo de indicadores de igualdade salarial e distribuição demográfica</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-file-download"></i>
+                        </div>
+                        <h5>Relatórios Detalhados</h5>
+                        <p>Geração de relatórios em Excel, PDF e Word com gráficos e tabelas</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Form -->
+        <section>
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-upload"></i> Enviar Dados para Análise</h4>
+                </div>
+                <div class="card-body">
+                    <form id="reportForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="companyName" class="form-label">Nome da Empresa</label>
+                                    <input type="text" class="form-control" id="companyName" name="company_name" value="Empresa Demo" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="kMin" class="form-label">Tamanho Mínimo do Grupo (k-anonimato)</label>
+                                    <input type="number" class="form-control" id="kMin" name="k_min" value="5" min="1" required>
+                                    <div class="form-text">Grupos menores que este valor serão marcados como "Insuficiente"</div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="primaryColor" class="form-label">Cor Primária dos Gráficos</label>
+                                    <input type="color" class="form-control form-control-color" id="primaryColor" name="primary_color" value="#0F6CBD" title="Escolha uma cor">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="accentColor" class="form-label">Cor Secundária dos Gráficos</label>
+                                    <input type="color" class="form-control form-control-color" id="accentColor" name="accent_color" value="#585858" title="Escolha uma cor">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Arquivo de Dados</label>
+                            <div class="upload-area" id="dropZone">
+                                <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i>
+                                <p class="mb-1">Arraste e solte seu arquivo aqui ou clique para selecionar</p>
+                                <p class="text-muted small">Formatos suportados: CSV, XLSX (Tamanho máximo: 10MB)</p>
+                                <input type="file" class="form-control d-none" id="fileInput" name="file" accept=".csv,.xlsx,.xls" required>
+                                <button type="button" class="btn btn-outline-primary mt-2" id="selectFileBtn">Selecionar Arquivo</button>
+                            </div>
+                            <div class="form-text" id="fileName"></div>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="generateDocx" name="generate_docx">
+                            <label class="form-check-label" for="generateDocx">Gerar relatório em formato Word (.docx)</label>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                <i class="fas fa-chart-line"></i> Gerar Relatório de Igualdade Salarial
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- Result Section -->
+        <section id="resultSection" class="result-section">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="fas fa-check-circle"></i> Relatório Gerado com Sucesso!</h4>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-file-archive fa-5x text-success mb-3"></i>
+                        <h5>Seu relatório está pronto para download</h5>
+                        <p class="text-muted">O arquivo ZIP contém todos os relatórios gerados</p>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <a href="#" class="btn btn-success btn-lg" id="downloadBtn">
+                            <i class="fas fa-download"></i> Baixar Relatório (.zip)
+                        </a>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h6>O que está incluído no relatório:</h6>
+                        <ul>
+                            <li><i class="fas fa-file-excel text-success"></i> Relatório em Excel com tabelas e gráficos</li>
+                            <li><i class="fas fa-file-pdf text-danger"></i> Relatório em PDF para apresentação</li>
+                            <li id="docxItem" style="display: none;"><i class="fas fa-file-word text-primary"></i> Relatório em Word (solicitado)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Progress Section -->
+        <section id="progressSection" class="result-section">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0"><i class="fas fa-cogs"></i> Processando Dados</h4>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Processando...</span>
+                        </div>
+                        <p class="mt-2">Estamos analisando seus dados e gerando os relatórios</p>
+                    </div>
+                    
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <p id="progressText" class="text-center mb-0">Preparando dados para análise...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-0">&copy; 2025 Relatório de Igualdade Salarial. Todos os direitos reservados.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0">Solução em conformidade com a legislação brasileira</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elements
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+            const selectFileBtn = document.getElementById('selectFileBtn');
+            const fileName = document.getElementById('fileName');
+            const reportForm = document.getElementById('reportForm');
+            const resultSection = document.getElementById('resultSection');
+            const progressSection = document.getElementById('progressSection');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const docxItem = document.getElementById('docxItem');
+            const progressText = document.getElementById('progressText');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            // Event Listeners
+            selectFileBtn.addEventListener('click', () => {
+                fileInput.click();
+            });
+            
+            fileInput.addEventListener('change', function() {
+                if (this.files.length > 0) {
+                    fileName.textContent = `Arquivo selecionado: ${this.files[0].name}`;
+                } else {
+                    fileName.textContent = '';
+                }
+            });
+            
+            // Drag and drop functionality
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight() {
+                dropZone.classList.add('active');
+            }
+            
+            function unhighlight() {
+                dropZone.classList.remove('active');
+            }
+            
+            dropZone.addEventListener('drop', handleDrop, false);
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                if (files.length) {
+                    fileInput.files = files;
+                    fileName.textContent = `Arquivo selecionado: ${files[0].name}`;
+                }
+            }
+            
+            // Form submission
+            reportForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Show progress section
+                progressSection.style.display = 'block';
+                resultSection.style.display = 'none';
+                
+                // Update progress text
+                progressText.textContent = 'Enviando dados para processamento...';
+                
+                // Check if DOCX is requested
+                if (document.getElementById('generateDocx').checked) {
+                    docxItem.style.display = 'list-item';
+                } else {
+                    docxItem.style.display = 'none';
+                }
+                
+                // Disable submit button
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...';
+                
+                // Prepare form data
+                const formData = new FormData(reportForm);
+                
+                try {
+                    // Send request to server
+                    const response = await fetch('/process', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (response.ok) {
+                        // Update progress text
+                        progressText.textContent = 'Preparando download...';
+                        
+                        // Get filename from response headers
+                        const contentDisposition = response.headers.get('Content-Disposition');
+                        let filename = 'relatorio.zip';
+                        if (contentDisposition) {
+                            const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+                            if (filenameMatch.length === 2) {
+                                filename = filenameMatch[1];
+                            }
+                        }
+                        
+                        // Create download URL
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        downloadBtn.href = url;
+                        downloadBtn.download = filename;
+                        
+                        // Show result section
+                        setTimeout(() => {
+                            progressSection.style.display = 'none';
+                            resultSection.style.display = 'block';
+                        }, 1000);
+                    } else {
+                        throw new Error('Erro no processamento');
+                    }
+                } catch (error) {
+                    alert('Ocorreu um erro ao processar os dados. Por favor, tente novamente.');
+                    console.error('Error:', error);
+                    progressSection.style.display = 'none';
+                } finally {
+                    // Re-enable submit button
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-chart-line"></i> Gerar Relatório de Igualdade Salarial';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
