@@ -16,6 +16,11 @@ from typing import Dict, List, Tuple, Union, Any
 
 import pandas as pd
 import numpy as np
+<<<<<<< HEAD
+=======
+import matplotlib.pyplot as plt
+import seaborn as sns
+>>>>>>> origin/main
 import xlsxwriter
 
 
@@ -151,11 +156,14 @@ def process_data(df: pd.DataFrame, k_min: int = 5) -> Dict[str, object]:
     dist_cbo_sexo_raca = df_proc.groupby(['cbo_2002', 'cbo_titulo', 'sexo', 'raca_cor']) ['id_trabalhador_hash'].nunique().reset_index()
     dist_cbo_sexo_raca = dist_cbo_sexo_raca.rename(columns={'id_trabalhador_hash': 'contagem_trabalhadores'})
     
+<<<<<<< HEAD
     # Create detailed distribution by CBO for the new report
     # This will have one row per CBO/sex/race combination with counts
     dist_cbo_detailed = df_proc.groupby(['cbo_2002', 'cbo_titulo', 'sexo', 'raca_cor'])['id_trabalhador_hash'].nunique().reset_index()
     dist_cbo_detailed = dist_cbo_detailed.rename(columns={'id_trabalhador_hash': 'quantitativo'})
     
+=======
+>>>>>>> origin/main
     # Pivot dist_cbo_sexo to get sex distribution
     dist_cbo_sex_pivot = dist_cbo_sexo.pivot_table(
         index=['cbo_2002', 'cbo_titulo'], 
@@ -197,7 +205,10 @@ def process_data(df: pd.DataFrame, k_min: int = 5) -> Dict[str, object]:
         'dist_cbo': dist_cbo,
         'dist_cbo_sexo': dist_cbo_sexo,  # Include sex distribution
         'dist_cbo_sexo_raca': dist_cbo_sexo_raca,  # Include sex and race distribution
+<<<<<<< HEAD
         'dist_cbo_detailed': dist_cbo_detailed,  # Include detailed distribution for new report
+=======
+>>>>>>> origin/main
         'semaforo_counts': semaforo_counts,
         'top_pos': top_pos,
         'top_neg': top_neg,
@@ -235,7 +246,10 @@ def create_excel(
     dist_cbo = aggregates["dist_cbo"]
     dist_cbo_sexo = aggregates["dist_cbo_sexo"]  # NEW: Get sex distribution
     dist_cbo_sexo_raca = aggregates["dist_cbo_sexo_raca"]  # Get sex and race distribution
+<<<<<<< HEAD
     dist_cbo_detailed = aggregates["dist_cbo_detailed"]  # Get detailed distribution for new report
+=======
+>>>>>>> origin/main
     dist_cbo_total = aggregates["dist_cbo_total"]  # Get total distribution
     semaforo_counts = aggregates["semaforo_counts"]
     top_pos = aggregates["top_pos"]
@@ -403,6 +417,7 @@ def create_excel(
     chart_raca.set_legend({"position": "bottom"})
     sheet_dist_sexo_raca.insert_chart("A{}".format(start_row_pivot + len(dist_cbo_raca_pivot) + 3), chart_raca, {"x_scale": 2, "y_scale": 1.5})
     
+<<<<<<< HEAD
     # NEW: Add a separate worksheet with detailed distribution data by CBO, sex, and race/color
     dist_cbo_detailed.to_excel(writer, sheet_name="Distribuicao_Detalhada", index=False)
     sheet_dist_detalhada = writer.sheets["Distribuicao_Detalhada"]
@@ -600,6 +615,8 @@ def create_excel(
         row_offset += len(stats_data) + 2
         chart_row_offset += 20  # Move down for next chart
     
+=======
+>>>>>>> origin/main
     # Save workbook
     writer.close()
 
