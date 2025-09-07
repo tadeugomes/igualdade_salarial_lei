@@ -56,7 +56,6 @@ def load_input(file_path: str) -> pd.DataFrame:
         "salario_contratual_mensal",
         "remuneracao_total_mensal",
         "data_competencia",
-        "id_trabalhador_hash",
     }
     missing = expected - set(map(str.lower, df.columns))
     # If some columns missing due to case differences, attempt to normalise
@@ -89,26 +88,60 @@ def process_data(df: pd.DataFrame, k_min: int = 5) -> Dict[str, object]:
     -------
     dict
         A dictionary containing the aggregated tables and metrics.
+        
+    Notes
+    -----
+    This function implements the Brazilian salary equality legislation requirements:
+    - Remuneração média: Uses 'remuneracao_total_mensal' which includes all components
+      (salário contratual, 13º salário, gratificações, comissões, horas extras, etc.)
+    - Composição da remuneração: Uses 'remuneracao_total_mensal' as the gross value
+      including all legally mandated components
+    - Razão salarial: Calculates both median and mean ratios with proper division
+      by zero protection for cases where data is insufficient
     """
     df_proc = df.copy()
     # Convert competence date to monthly period
     df_proc["data_competencia"] = pd.to_datetime(
         df_proc["data_competencia"], errors="coerce"
     ).dt.to_period("M")
+    
+    # Apply filters according to requirements
+    # 1. Remove records with invalid race/color and sex information
+    df_proc = df_proc.dropna(subset=['raca_cor', 'sexo'])
+    
+    # 2. Filter salary contractual values - only consider salaries > 0
+    df_proc = df_proc[df_proc['salario_contratual_mensal'] > 0]
+    
+    # 3. Apply salary limits (0.3 to 150 minimum wages)
+    # Assuming minimum wage is R$ 1,320.00 (current value in 2024)
+    salario_minimo = 1320.00
+    limite_inferior = 0.3 * salario_minimo
+    limite_superior = 150 * salario_minimo
+    
+    df_proc = df_proc[
+        (df_proc['salario_contratual_mensal'] >= limite_inferior) & 
+        (df_proc['salario_contratual_mensal'] <= limite_superior)
+    ]
     # Group by CBO and sexo
     group = df_proc.groupby(["cbo_2002", "cbo_titulo", "sexo"])
     summary = group.agg(
         mediana_sal=("salario_contratual_mensal", "median"),
         media_rem=("remuneracao_total_mensal", "mean"),
-        count=("id_trabalhador_hash", pd.Series.nunique),
+        count=("cnpj_estabelecimento", "size"),
     ).reset_index()
     # Pivot to separate sexes
     pivot_med = summary.pivot(index=["cbo_2002", "cbo_titulo"], columns="sexo", values="mediana_sal")
     pivot_mean = summary.pivot(index=["cbo_2002", "cbo_titulo"], columns="sexo", values="media_rem")
     counts_pivot = summary.pivot(index=["cbo_2002", "cbo_titulo"], columns="sexo", values="count")
-    # Compute ratios
-    pivot_med["ratio_med"] = pivot_med["F"] / pivot_med["M"]
-    pivot_mean["ratio_mean"] = pivot_mean["F"] / pivot_mean["M"]
+    # Compute ratios with division by zero protection
+    pivot_med["ratio_med"] = pivot_med.apply(
+        lambda row: row["F"] / row["M"] if row["M"] != 0 and not pd.isna(row["M"]) and not pd.isna(row["F"]) else np.nan, 
+        axis=1
+    )
+    pivot_mean["ratio_mean"] = pivot_mean.apply(
+        lambda row: row["F"] / row["M"] if row["M"] != 0 and not pd.isna(row["M"]) and not pd.isna(row["F"]) else np.nan, 
+        axis=1
+    )
     # Classify groups
     classifications = []
     for idx in pivot_med.index:
@@ -138,20 +171,20 @@ def process_data(df: pd.DataFrame, k_min: int = 5) -> Dict[str, object]:
     }).reset_index(drop=True)
     # Trend per month
     trends = df_proc.groupby(["data_competencia", "sexo"]) ["remuneracao_total_mensal"].mean().unstack()
-    trends["razao_F_M"] = trends["F"] / trends["M"]
+    trends["razao_F_M"] = trends.apply(
+        lambda row: row["F"] / row["M"] if row["M"] != 0 and not pd.isna(row["M"]) and not pd.isna(row["F"]) else np.nan, 
+        axis=1
+    )
     trends = trends.reset_index().rename(columns={"data_competencia": "data_competencia"})
     # Distribution by CBO (total)
     dist_cbo_grouped = df_proc.groupby(['cbo_2002', 'cbo_titulo'])
-    dist_cbo_total = dist_cbo_grouped['id_trabalhador_hash'].nunique().reset_index()
-    dist_cbo_total = dist_cbo_total.rename(columns={'id_trabalhador_hash': 'total_trabalhadores'})
+    dist_cbo_total = dist_cbo_grouped.size().reset_index(name='total_trabalhadores')
     
     # Distribution by CBO and sexo
-    dist_cbo_sexo = df_proc.groupby(['cbo_2002', 'cbo_titulo', 'sexo']) ['id_trabalhador_hash'].nunique().reset_index()
-    dist_cbo_sexo = dist_cbo_sexo.rename(columns={'id_trabalhador_hash': 'contagem_trabalhadores'})
+    dist_cbo_sexo = df_proc.groupby(['cbo_2002', 'cbo_titulo', 'sexo']).size().reset_index(name='contagem_trabalhadores')
     
     # Distribution by CBO, sexo, and raca_cor
-    dist_cbo_sexo_raca = df_proc.groupby(['cbo_2002', 'cbo_titulo', 'sexo', 'raca_cor']) ['id_trabalhador_hash'].nunique().reset_index()
-    dist_cbo_sexo_raca = dist_cbo_sexo_raca.rename(columns={'id_trabalhador_hash': 'contagem_trabalhadores'})
+    dist_cbo_sexo_raca = df_proc.groupby(['cbo_2002', 'cbo_titulo', 'sexo', 'raca_cor']).size().reset_index(name='contagem_trabalhadores')
     
     # Pivot dist_cbo_sexo to get sex distribution
     dist_cbo_sex_pivot = dist_cbo_sexo.pivot_table(
@@ -226,19 +259,23 @@ def create_excel(
     accent_color : str
         Hex colour used for secondary elements (second series).
     """
-    # Create a copy of the original dataframe for processing
+    # Define df_proc with proper filters for median analysis
     df_proc = df.copy()
-    # Convert competence date to monthly period
-    df_proc["data_competencia"] = pd.to_datetime(
-        df_proc["data_competencia"], errors="coerce"
-    ).dt.to_period("M")
+    df_proc["data_competencia"] = pd.to_datetime(df_proc["data_competencia"], errors="coerce").dt.to_period("M")
     
-    # Ensure df_proc is available for median analysis
-    if 'df_proc' not in locals():
-        df_proc = df.copy()
-        df_proc["data_competencia"] = pd.to_datetime(
-            df_proc["data_competencia"], errors="coerce"
-        ).dt.to_period("M")
+    # Apply the same filters used in process_data
+    df_proc = df_proc.dropna(subset=['raca_cor', 'sexo'])
+    df_proc = df_proc[df_proc['salario_contratual_mensal'] > 0]
+    
+    # Apply salary limits
+    salario_minimo = 1320.00
+    limite_inferior = 0.3 * salario_minimo
+    limite_superior = 150 * salario_minimo
+    
+    df_proc = df_proc[
+        (df_proc['salario_contratual_mensal'] >= limite_inferior) & 
+        (df_proc['salario_contratual_mensal'] <= limite_superior)
+    ]
     
     result_df = aggregates["result_df"]
     trends = aggregates["trends"].copy()
@@ -556,12 +593,7 @@ def create_excel(
     # Write header for the median analysis sheet
     median_sheet.write(0, 0, "Análise da Mediana Salarial por CBO - Homens vs Mulheres", header_fmt)
     
-    # Ensure df_proc is available for median analysis
-    if 'df_proc' not in locals():
-        df_proc = df.copy()
-        df_proc["data_competencia"] = pd.to_datetime(
-            df_proc["data_competencia"], errors="coerce"
-        ).dt.to_period("M")
+    # df_proc is already defined at the beginning of the function with proper filters
     
     # Prepare data for median analysis
     chart_start_row = 3
@@ -662,7 +694,7 @@ def create_excel(
                 })
             
             # Set chart properties
-            chart_median.set_title({"name": f"Mediana Salarial com Intervalo Interquartil - {cbo_titulo}"})
+            chart_median.set_title({"name": f"Mediana Salarial - {cbo_titulo}"})
             chart_median.set_x_axis({"name": "Gênero"})
             chart_median.set_y_axis({"name": "Salário Contratual Mensal (R$)"})
             chart_median.set_legend({"position": "bottom"})

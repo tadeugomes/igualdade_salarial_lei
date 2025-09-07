@@ -46,6 +46,28 @@ async def read_root():
     with open("static/index.html", "r", encoding="utf-8") as file:
         return HTMLResponse(content=file.read(), status_code=200)
 
+@app.get("/download-model")
+async def download_model():
+    """
+    Download a sample CSV model with example data.
+    """
+    model_path = "dados_sinteticos_cnpj_unico.csv"
+    if not os.path.exists(model_path):
+        return Response(
+            content="Model file not found",
+            status_code=404,
+            media_type="text/plain"
+        )
+    
+    with open(model_path, 'rb') as model_file:
+        content = model_file.read()
+    
+    return Response(
+        content=content,
+        media_type="text/csv",
+        headers={"Content-Disposition": 'attachment; filename="modelo_dados_exemplo.csv"'}
+    )
+
 @app.post("/process")
 async def process_file(
     file: UploadFile = File(...),
