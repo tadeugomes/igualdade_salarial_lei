@@ -50,10 +50,8 @@ async def read_root():
 async def process_file(
     file: UploadFile = File(...),
     company_name: str = Form("Empresa Demo"),
-    k_min: int = Form(5),
     primary_color: str = Form("#0F6CBD"),
     accent_color: str = Form("#585858"),
-    generate_docx: bool = Form(False),
 ):
     """
     Process an uploaded CSV or XLSX file and return a ZIP with reports.
@@ -81,10 +79,10 @@ async def process_file(
             df=df,
             tmpdir=tmpdir,
             company_name=company_name,
-            k_min=k_min,
+            k_min=3,
             primary_color=primary_color,
             accent_color=accent_color,
-            generate_docx=generate_docx,
+            generate_docx=False,
         )
         # Package into ZIP
         zip_path = os.path.join(tmpdir, "relatorio.zip")

@@ -226,6 +226,20 @@ def create_excel(
     accent_color : str
         Hex colour used for secondary elements (second series).
     """
+    # Create a copy of the original dataframe for processing
+    df_proc = df.copy()
+    # Convert competence date to monthly period
+    df_proc["data_competencia"] = pd.to_datetime(
+        df_proc["data_competencia"], errors="coerce"
+    ).dt.to_period("M")
+    
+    # Ensure df_proc is available for median analysis
+    if 'df_proc' not in locals():
+        df_proc = df.copy()
+        df_proc["data_competencia"] = pd.to_datetime(
+            df_proc["data_competencia"], errors="coerce"
+        ).dt.to_period("M")
+    
     result_df = aggregates["result_df"]
     trends = aggregates["trends"].copy()
     dist_cbo = aggregates["dist_cbo"]
@@ -249,13 +263,13 @@ def create_excel(
     })
     
     # Raw data
-    df.to_excel(writer, sheet_name="Dados_Sinteticos", index=False)
-    data_sheet = writer.sheets["Dados_Sinteticos"]
+    df.to_excel(writer, sheet_name="Dados_Originais", index=False)
+    data_sheet = writer.sheets["Dados_Originais"]
     for col_num, col_name in enumerate(df.columns):
         data_sheet.write(0, col_num, col_name, header_fmt)
     # Summary sheet
-    result_df.to_excel(writer, sheet_name="Resumo_CBO_Sexo", index=False)
-    sheet_sum = writer.sheets["Resumo_CBO_Sexo"]
+    result_df.to_excel(writer, sheet_name="razao_salarial_cbo", index=False)
+    sheet_sum = writer.sheets["razao_salarial_cbo"]
     for col_num, col_name in enumerate(result_df.columns):
         sheet_sum.write(0, col_num, col_name, header_fmt)
     # Chart for ratios
@@ -264,14 +278,14 @@ def create_excel(
     ratio_mean_col = result_df.columns.get_loc("razao_media_F_M")
     chart.add_series({
         "name": "Razão Mediana F/M",
-        "categories": ["Resumo_CBO_Sexo", 1, 1, len(result_df), 1],
-        "values": ["Resumo_CBO_Sexo", 1, ratio_med_col, len(result_df), ratio_med_col],
+        "categories": ["razao_salarial_cbo", 1, 1, len(result_df), 1],
+        "values": ["razao_salarial_cbo", 1, ratio_med_col, len(result_df), ratio_med_col],
         "fill": {"color": primary_color},
     })
     chart.add_series({
         "name": "Razão Média F/M",
-        "categories": ["Resumo_CBO_Sexo", 1, 1, len(result_df), 1],
-        "values": ["Resumo_CBO_Sexo", 1, ratio_mean_col, len(result_df), ratio_mean_col],
+        "categories": ["razao_salarial_cbo", 1, 1, len(result_df), 1],
+        "values": ["razao_salarial_cbo", 1, ratio_mean_col, len(result_df), ratio_mean_col],
         "fill": {"color": accent_color},
     })
     chart.set_title({"name": "Razões F/M por CBO"})
@@ -282,16 +296,16 @@ def create_excel(
     # Trend sheet
     trends_loc = trends.copy()
     trends_loc["data_competencia"] = trends_loc["data_competencia"].astype(str)
-    trends_loc.to_excel(writer, sheet_name="Tendencias_12m", index=False)
-    sheet_tr = writer.sheets["Tendencias_12m"]
+    trends_loc.to_excel(writer, sheet_name="Evolucao_Mensal", index=False)
+    sheet_tr = writer.sheets["Evolucao_Mensal"]
     for col_num, col_name in enumerate(trends_loc.columns):
         sheet_tr.write(0, col_num, col_name, header_fmt)
     chart2 = workbook.add_chart({"type": "line"})
     ratio_col = trends_loc.columns.get_loc("razao_F_M")
     chart2.add_series({
         "name": "Razão F/M",
-        "categories": ["Tendencias_12m", 1, 0, len(trends_loc), 0],
-        "values": ["Tendencias_12m", 1, ratio_col, len(trends_loc), ratio_col],
+        "categories": ["Evolucao_Mensal", 1, 0, len(trends_loc), 0],
+        "values": ["Evolucao_Mensal", 1, ratio_col, len(trends_loc), ratio_col],
         "line": {"color": primary_color},
     })
     chart2.set_title({"name": "Tendência da Razão F/M (12m)"})
@@ -300,8 +314,8 @@ def create_excel(
     chart2.set_legend({"position": "bottom"})
     sheet_tr.insert_chart("E2", chart2, {"x_scale": 1.5, "y_scale": 1.5})
     # Distribution sheet with sex distribution
-    dist_cbo.to_excel(writer, sheet_name="Distribuicao_CBO", index=False)
-    sheet_dist = writer.sheets["Distribuicao_CBO"]
+    dist_cbo.to_excel(writer, sheet_name="Distribuicao_por_Ocupacao", index=False)
+    sheet_dist = writer.sheets["Distribuicao_por_Ocupacao"]
     # Apply header formatting to the first row
     for col_num, col_name in enumerate(dist_cbo.columns):
         sheet_dist.write(0, col_num, col_name, header_fmt)
@@ -311,8 +325,8 @@ def create_excel(
     total_col = dist_cbo.columns.get_loc("total_trabalhadores")
     chart3.add_series({
         "name": "Trabalhadores",
-        "categories": ["Distribuicao_CBO", 1, 1, len(dist_cbo), 1],
-        "values": ["Distribuicao_CBO", 1, total_col, len(dist_cbo), total_col],
+        "categories": ["Distribuicao_por_Ocupacao", 1, 1, len(dist_cbo), 1],
+        "values": ["Distribuicao_por_Ocupacao", 1, total_col, len(dist_cbo), total_col],
         "fill": {"color": primary_color},
     })
     chart3.set_title({"name": "Distribuição de Trabalhadores por CBO"})
@@ -326,23 +340,23 @@ def create_excel(
     f_col = list(dist_cbo.columns).index("F") if "F" in dist_cbo.columns else -1
     m_col = list(dist_cbo.columns).index("M") if "M" in dist_cbo.columns else -1
     
-    # Define colors for F and M (Purple for F, Yellow for M)
-    female_color = "#9966CC"  # Purple
-    male_color = "#FFD700"    # Yellow
+    # Define colors for F and M (use user-selected colors with defaults)
+    female_color = primary_color if primary_color != "#0F6CBD" else "#9966CC"  # Use primary_color or default purple
+    male_color = accent_color if accent_color != "#585858" else "#FFD700"    # Use accent_color or default yellow
     
     if f_col >= 0:
         chart4.add_series({
             "name": "Mulheres",
-            "categories": ["Distribuicao_CBO", 1, 1, len(dist_cbo), 1],
-            "values": ["Distribuicao_CBO", 1, f_col, len(dist_cbo), f_col],
+            "categories": ["Distribuicao_por_Ocupacao", 1, 1, len(dist_cbo), 1],
+            "values": ["Distribuicao_por_Ocupacao", 1, f_col, len(dist_cbo), f_col],
             "fill": {"color": female_color},
         })
     
     if m_col >= 0:
         chart4.add_series({
             "name": "Homens",
-            "categories": ["Distribuicao_CBO", 1, 1, len(dist_cbo), 1],
-            "values": ["Distribuicao_CBO", 1, m_col, len(dist_cbo), m_col],
+            "categories": ["Distribuicao_por_Ocupacao", 1, 1, len(dist_cbo), 1],
+            "values": ["Distribuicao_por_Ocupacao", 1, m_col, len(dist_cbo), m_col],
             "fill": {"color": male_color},
         })
     
@@ -353,11 +367,72 @@ def create_excel(
     sheet_dist.insert_chart("H20", chart4, {"x_scale": 1.5, "y_scale": 1.5})
     
     # NEW: Distribution sheet with sex and race distribution
-    dist_cbo_sexo_raca.to_excel(writer, sheet_name="Distribuicao_CBO_Sexo_Raca", index=False)
-    sheet_dist_sexo_raca = writer.sheets["Distribuicao_CBO_Sexo_Raca"]
+    dist_cbo_sexo_raca.to_excel(writer, sheet_name="Analise_Demografica", index=False)
+    sheet_dist_sexo_raca = writer.sheets["Analise_Demografica"]
     # Apply header formatting to the first row
     for col_num, col_name in enumerate(dist_cbo_sexo_raca.columns):
         sheet_dist_sexo_raca.write(0, col_num, col_name, header_fmt)
+    
+    # Add totals by CBO
+    start_row_totals = len(dist_cbo_sexo_raca) + 1
+    current_total_row = start_row_totals
+    
+    # Calculate totals by CBO
+    unique_cbos = dist_cbo_sexo_raca[['cbo_2002', 'cbo_titulo']].drop_duplicates()
+    
+    for _, cbo_row in unique_cbos.iterrows():
+        cbo_codigo = cbo_row['cbo_2002']
+        cbo_titulo = cbo_row['cbo_titulo']
+        
+        # Filter data for this CBO
+        cbo_data = dist_cbo_sexo_raca[
+            (dist_cbo_sexo_raca['cbo_2002'] == cbo_codigo) & 
+            (dist_cbo_sexo_raca['cbo_titulo'] == cbo_titulo)
+        ]
+        
+        # Calculate totals for this CBO
+        total_funcionarios = cbo_data['contagem_trabalhadores'].sum()
+        total_mulheres = cbo_data[cbo_data['sexo'] == 'F']['contagem_trabalhadores'].sum()
+        total_homens = cbo_data[cbo_data['sexo'] == 'M']['contagem_trabalhadores'].sum()
+        
+        # Write CBO total
+        sheet_dist_sexo_raca.write(current_total_row, 0, f"TOTAL CBO {cbo_codigo}", header_fmt)
+        sheet_dist_sexo_raca.write(current_total_row, 1, cbo_titulo)
+        sheet_dist_sexo_raca.write(current_total_row, 2, "TOTAL")
+        sheet_dist_sexo_raca.write(current_total_row, 3, total_funcionarios)
+        sheet_dist_sexo_raca.write(current_total_row, 4, f"Mulheres: {total_mulheres} | Homens: {total_homens}")
+        current_total_row += 1
+    
+    # Add overall totals
+    overall_total = dist_cbo_sexo_raca['contagem_trabalhadores'].sum()
+    overall_mulheres = dist_cbo_sexo_raca[dist_cbo_sexo_raca['sexo'] == 'F']['contagem_trabalhadores'].sum()
+    overall_homens = dist_cbo_sexo_raca[dist_cbo_sexo_raca['sexo'] == 'M']['contagem_trabalhadores'].sum()
+    
+    # Write overall totals
+    sheet_dist_sexo_raca.write(current_total_row, 0, "TOTAL GERAL", header_fmt)
+    sheet_dist_sexo_raca.write(current_total_row, 3, overall_total)
+    sheet_dist_sexo_raca.write(current_total_row, 4, f"Mulheres: {overall_mulheres} | Homens: {overall_homens}")
+    
+    # Add totals by race
+    current_total_row += 2
+    sheet_dist_sexo_raca.write(current_total_row, 0, "TOTAL POR RAÇA/COR", header_fmt)
+    current_total_row += 1
+    
+    race_totals = dist_cbo_sexo_raca.groupby('raca_cor')['contagem_trabalhadores'].sum()
+    for race, total in race_totals.items():
+        race_mulheres = dist_cbo_sexo_raca[
+            (dist_cbo_sexo_raca['raca_cor'] == race) & 
+            (dist_cbo_sexo_raca['sexo'] == 'F')
+        ]['contagem_trabalhadores'].sum()
+        race_homens = dist_cbo_sexo_raca[
+            (dist_cbo_sexo_raca['raca_cor'] == race) & 
+            (dist_cbo_sexo_raca['sexo'] == 'M')
+        ]['contagem_trabalhadores'].sum()
+        
+        sheet_dist_sexo_raca.write(current_total_row, 0, race)
+        sheet_dist_sexo_raca.write(current_total_row, 3, total)
+        sheet_dist_sexo_raca.write(current_total_row, 4, f"Mulheres: {race_mulheres} | Homens: {race_homens}")
+        current_total_row += 1
     
     # Create a pivot table for charting: CBO vs Raça/Cor with sex as series
     dist_cbo_raca_pivot = dist_cbo_sexo_raca.pivot_table(
@@ -373,30 +448,230 @@ def create_excel(
         dist_cbo_raca_pivot.columns = ['_'.join(map(str, col)).strip() for col in dist_cbo_raca_pivot.columns.values]
     
     # Write pivot table to the sheet for charting
-    start_row_pivot = len(dist_cbo_sexo_raca) + 3
-    dist_cbo_raca_pivot.to_excel(writer, sheet_name="Distribuicao_CBO_Sexo_Raca", index=False, startrow=start_row_pivot)
+    start_row_pivot = current_total_row + 3
+    dist_cbo_raca_pivot.to_excel(writer, sheet_name="Analise_Demografica", index=False, startrow=start_row_pivot)
     
     # Add header for pivot table
     for col_num, col_name in enumerate(dist_cbo_raca_pivot.columns):
         sheet_dist_sexo_raca.write(start_row_pivot, col_num, col_name, header_fmt)
     
-    # Create chart for CBO vs Raça/Cor distribution
-    chart_raca = workbook.add_chart({"type": "column", "subtype": "stacked"})
+    # Create individual charts for each CBO with Race x Gender distribution
+    # Create a new sheet for individual CBO charts
+    chart_sheet_name = "Graficos_Detalhados_por_CBO"
+    workbook.add_worksheet(chart_sheet_name)
+    chart_sheet = workbook.get_worksheet_by_name(chart_sheet_name)
     
-    # Add series for each race/color category (skip first two columns: cbo_2002 and cbo_titulo)
-    for i, col_name in enumerate(dist_cbo_raca_pivot.columns[2:], start=2):  # Start from index 2 to skip cbo_2002 and cbo_titulo
-        if dist_cbo_raca_pivot[col_name].sum() > 0:  # Only add series if there are values
-            chart_raca.add_series({
-                "name": col_name,
-                "categories": ["Distribuicao_CBO_Sexo_Raca", start_row_pivot+1, 1, start_row_pivot+len(dist_cbo_raca_pivot), 1],  # CBO titles
-                "values": ["Distribuicao_CBO_Sexo_Raca", start_row_pivot+1, i, start_row_pivot+len(dist_cbo_raca_pivot), i],
-            })
+    # Write header for the charts sheet
+    chart_sheet.write(0, 0, "Gráficos Detalhados por CBO - Distribuição Raça/Cor x Sexo", header_fmt)
     
-    chart_raca.set_title({"name": "Distribuição de Trabalhadores por CBO e Raça/Cor"})
-    chart_raca.set_x_axis({"name": "CBO"})
-    chart_raca.set_y_axis({"name": "Número de Trabalhadores"})
-    chart_raca.set_legend({"position": "bottom"})
-    sheet_dist_sexo_raca.insert_chart("A{}".format(start_row_pivot + len(dist_cbo_raca_pivot) + 3), chart_raca, {"x_scale": 2, "y_scale": 1.5})
+    current_row = 2
+    
+    # Get unique CBOs
+    unique_cbos = dist_cbo_sexo_raca[['cbo_2002', 'cbo_titulo']].drop_duplicates()
+    
+    for _, cbo_row in unique_cbos.iterrows():
+        cbo_codigo = cbo_row['cbo_2002']
+        cbo_titulo = cbo_row['cbo_titulo']
+        
+        # Filter data for this CBO
+        cbo_data = dist_cbo_sexo_raca[
+            (dist_cbo_sexo_raca['cbo_2002'] == cbo_codigo) & 
+            (dist_cbo_sexo_raca['cbo_titulo'] == cbo_titulo)
+        ]
+        
+        if len(cbo_data) > 0:  # Only create chart if there are values
+            # Write CBO title
+            chart_sheet.write(current_row, 0, f"CBO {cbo_codigo} - {cbo_titulo}", header_fmt)
+            current_row += 1
+            
+            # Create pivot table for this CBO: Race x Gender
+            cbo_pivot = cbo_data.pivot_table(
+                index='raca_cor', 
+                columns='sexo', 
+                values='contagem_trabalhadores', 
+                aggfunc='sum', 
+                fill_value=0
+            )
+            
+            # Write headers for the data table
+            chart_sheet.write(current_row, 0, "Raça/Cor")
+            chart_sheet.write(current_row, 1, "Mulheres (F)")
+            chart_sheet.write(current_row, 2, "Homens (M)")
+            chart_sheet.write(current_row, 3, "Total")
+            current_row += 1
+            
+            # Write data for this CBO
+            for race in cbo_pivot.index:
+                f_count = cbo_pivot.loc[race, 'F'] if 'F' in cbo_pivot.columns else 0
+                m_count = cbo_pivot.loc[race, 'M'] if 'M' in cbo_pivot.columns else 0
+                total = f_count + m_count
+                
+                chart_sheet.write(current_row, 0, race)
+                chart_sheet.write(current_row, 1, f_count)
+                chart_sheet.write(current_row, 2, m_count)
+                chart_sheet.write(current_row, 3, total)
+                current_row += 1
+            
+            # Create grouped column chart for this specific CBO
+            chart_cbo = workbook.add_chart({"type": "column"})
+            
+            # Add series for women
+            if 'F' in cbo_pivot.columns:
+                chart_cbo.add_series({
+                    "name": "Mulheres (F)",
+                    "categories": [chart_sheet_name, current_row - len(cbo_pivot.index), 0, current_row - 1, 0],
+                    "values": [chart_sheet_name, current_row - len(cbo_pivot.index), 1, current_row - 1, 1],
+                    "fill": {"color": primary_color if primary_color != "#0F6CBD" else "#9966CC"},  # Use user-selected color or default purple
+                    "overlap": -10,
+                    "gap": 20,
+                })
+            
+            # Add series for men
+            if 'M' in cbo_pivot.columns:
+                chart_cbo.add_series({
+                    "name": "Homens (M)",
+                    "categories": [chart_sheet_name, current_row - len(cbo_pivot.index), 0, current_row - 1, 0],
+                    "values": [chart_sheet_name, current_row - len(cbo_pivot.index), 2, current_row - 1, 2],
+                    "fill": {"color": accent_color if accent_color != "#585858" else "#FFD700"},  # Use user-selected color or default yellow
+                    "overlap": -10,
+                    "gap": 20,
+                })
+            
+            # Set chart properties
+            chart_cbo.set_title({"name": f"Distribuição por Raça/Cor x Sexo - {cbo_titulo}"})
+            chart_cbo.set_x_axis({"name": "Raça/Cor"})
+            chart_cbo.set_y_axis({"name": "Número de Trabalhadores"})
+            chart_cbo.set_legend({"position": "bottom"})
+            
+            # Insert chart
+            chart_sheet.insert_chart(current_row, 5, chart_cbo, {"x_scale": 1.5, "y_scale": 1.2})
+            
+            current_row += 3  # Space for next chart
+    
+    # Create new sheet for median salary analysis by CBO with column charts
+    median_sheet_name = "Analise_Mediana_Salarial_CBO"
+    workbook.add_worksheet(median_sheet_name)
+    median_sheet = workbook.get_worksheet_by_name(median_sheet_name)
+    
+    # Write header for the median analysis sheet
+    median_sheet.write(0, 0, "Análise da Mediana Salarial por CBO - Homens vs Mulheres", header_fmt)
+    
+    # Ensure df_proc is available for median analysis
+    if 'df_proc' not in locals():
+        df_proc = df.copy()
+        df_proc["data_competencia"] = pd.to_datetime(
+            df_proc["data_competencia"], errors="coerce"
+        ).dt.to_period("M")
+    
+    # Prepare data for median analysis
+    chart_start_row = 3
+    current_row = chart_start_row
+    
+    for cbo_codigo, cbo_titulo in zip(result_df["cbo_2002"], result_df["cbo_titulo"]):
+        # Filter data for this CBO
+        cbo_df = df_proc[
+            (df_proc["cbo_2002"] == cbo_codigo) & 
+            (df_proc["cbo_titulo"] == cbo_titulo)
+        ]
+        
+        if len(cbo_df) > 0:
+            # Write CBO title
+            median_sheet.write(current_row, 0, f"CBO {cbo_codigo} - {cbo_titulo}", header_fmt)
+            current_row += 1
+            
+            # Calculate statistics by gender
+            female_data = cbo_df[cbo_df["sexo"] == "F"]["salario_contratual_mensal"].dropna()
+            male_data = cbo_df[cbo_df["sexo"] == "M"]["salario_contratual_mensal"].dropna()
+            
+            # Write summary statistics data
+            data_row = current_row
+            median_sheet.write(data_row, 0, "Gênero", header_fmt)
+            median_sheet.write(data_row, 1, "Mediana", header_fmt)
+            median_sheet.write(data_row, 2, "Média", header_fmt)
+            median_sheet.write(data_row, 3, "Q1", header_fmt)
+            median_sheet.write(data_row, 4, "Q3", header_fmt)
+            median_sheet.write(data_row, 5, "Contagem", header_fmt)
+            
+            # Women statistics
+            if len(female_data) > 0:
+                female_median = female_data.median()
+                female_mean = female_data.mean()
+                female_q1 = female_data.quantile(0.25)
+                female_q3 = female_data.quantile(0.75)
+                female_count = len(female_data)
+                
+                median_sheet.write(data_row + 1, 0, "Mulheres")
+                median_sheet.write(data_row + 1, 1, female_median)
+                median_sheet.write(data_row + 1, 2, female_mean)
+                median_sheet.write(data_row + 1, 3, female_q1)
+                median_sheet.write(data_row + 1, 4, female_q3)
+                median_sheet.write(data_row + 1, 5, female_count)
+            
+            # Men statistics
+            if len(male_data) > 0:
+                male_median = male_data.median()
+                male_mean = male_data.mean()
+                male_q1 = male_data.quantile(0.25)
+                male_q3 = male_data.quantile(0.75)
+                male_count = len(male_data)
+                
+                median_sheet.write(data_row + 2, 0, "Homens")
+                median_sheet.write(data_row + 2, 1, male_median)
+                median_sheet.write(data_row + 2, 2, male_mean)
+                median_sheet.write(data_row + 2, 3, male_q1)
+                median_sheet.write(data_row + 2, 4, male_q3)
+                median_sheet.write(data_row + 2, 5, male_count)
+            
+            # Create column chart showing medians with quartile ranges
+            chart_median = workbook.add_chart({"type": "column"})
+            
+            # Define colors using user-selected colors with defaults
+            female_color = primary_color if primary_color != "#0F6CBD" else "#9966CC"  # Use primary_color or default purple
+            male_color = accent_color if accent_color != "#585858" else "#FFD700"    # Use accent_color or default yellow
+            
+            # Add series for women median
+            if len(female_data) > 0:
+                chart_median.add_series({
+                    "name": f"Mulheres (Mediana: R$ {female_median:,.2f})",
+                    "categories": [median_sheet_name, data_row + 1, 0, data_row + 1, 0],
+                    "values": [median_sheet_name, data_row + 1, 1, data_row + 1, 1],
+                    "fill": {"color": female_color},
+                    "error_bars": {
+                        "type": "custom",
+                        "plus_values": [female_q3 - female_median],
+                        "minus_values": [female_median - female_q1],
+                        "line_color": "#333333",
+                        "line_width": 2,
+                    },
+                })
+            
+            # Add series for men median
+            if len(male_data) > 0:
+                chart_median.add_series({
+                    "name": f"Homens (Mediana: R$ {male_median:,.2f})",
+                    "categories": [median_sheet_name, data_row + 2, 0, data_row + 2, 0],
+                    "values": [median_sheet_name, data_row + 2, 1, data_row + 2, 1],
+                    "fill": {"color": male_color},
+                    "error_bars": {
+                        "type": "custom",
+                        "plus_values": [male_q3 - male_median],
+                        "minus_values": [male_median - male_q1],
+                        "line_color": "#333333",
+                        "line_width": 2,
+                    },
+                })
+            
+            # Set chart properties
+            chart_median.set_title({"name": f"Mediana Salarial com Intervalo Interquartil - {cbo_titulo}"})
+            chart_median.set_x_axis({"name": "Gênero"})
+            chart_median.set_y_axis({"name": "Salário Contratual Mensal (R$)"})
+            chart_median.set_legend({"position": "bottom"})
+            
+            # Insert chart
+            median_sheet.insert_chart(data_row, 7, chart_median, {"x_scale": 1.8, "y_scale": 1.5})
+            
+            # Move to next position
+            current_row = data_row + 8  # Space for next chart
     
     # Save workbook
     writer.close()
